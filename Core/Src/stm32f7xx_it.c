@@ -215,3 +215,9 @@ void TIM7_IRQHandler(void)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (htim->Instance == TIM7) {
+       HAL_GPIO_TogglePin(GPIOB, LD1_Pin); // Toggle LED pin (LD1)
+    }
+}
