@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,12 +95,23 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM7_Init(void);
 /* USER CODE BEGIN PFP */
-
+void SetPWMDutyCycle(uint16_t new_duty_value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void SetPWMDutyCycle(uint16_t new_duty_value) {
+    // Ensure the new duty cycle does not exceed the timer period (ARR)
+    if (new_duty_value <= htim1.Init.Period) {
+        // Update the Capture/Compare register to set PWM pulse width
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, new_duty_value);
 
+        // UART Debug print of duty cycle value
+        char buffer[50];
+        sprintf(buffer, "PWM Duty Cycle: %u\r\n", new_duty_value);
+        HAL_UART_Transmit(&huart3, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -142,8 +153,14 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM7_Init();
+
   /* USER CODE BEGIN 2 */
+  // Starts TIM7 in interrupt mode.
   HAL_TIM_Base_Start_IT(&htim7);
+  // Start PWM
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  // Set 50% duty cycle
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (htim1.Init.Period + 1) / 2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -423,7 +440,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
+  htim1.Init.Prescaler = 47;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 65535;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
